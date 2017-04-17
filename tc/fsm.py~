@@ -1,0 +1,74 @@
+#!/usr/bin/python3.2 -tt
+from __future__ import print_function
+import sys
+import os
+import argparse
+##############################################################################
+class FSMContext:
+    def __init__(self):
+        self.state_tbl = {}
+        self.cur_state = None
+    def __del__(self):
+        self.cur_state = None
+        self.state_tbl.clear()
+    def set_state(self, state_tag):
+        result = None
+        if state_tag in self.state_tbl:
+            self.cur_state = self.state_tbl[state_tag]
+            result = state_tag
+        else:
+            print("invalid state: {0}".format(state_tag), file=sys.stderr)
+        return result
+    def get_state(self):
+        result = None
+        if self.cur_state is not None:
+            result = self.cur_state.tag
+        return result
+    def add_state(self, state_obj):
+        tag = state_obj.tag
+        self.state_tbl[tag] = state_obj
+        return tag
+    def process(self, inbox):
+        if self.cur_state is not None:
+            next_state_tag = self.cur_state.process(inbox)
+            self.set_state(next_state_tag)
+    def action(self, outbox):
+        pass
+
+class FSMState:
+    def __init__(self,tag,context):
+        self.tag = tag
+        self.context = context
+    def __del__(self):
+        pass
+    def process(self, inbox):
+        next_state_tag = self.tag
+        # call self.context.action(data_out)
+        # set next state tag
+        return next_state_tag
+##############################################################################
+def main(argv):
+    result = 0
+    global me
+    global args
+    mydir, me = os.path.split(os.path.abspath(argv[0]))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v','--verbose', dest='verbose', action='store_true',
+                        help='run verbosely')
+    parser.add_argument('file_list', nargs='*', metavar='FILE',
+                        help='files to process')
+    args = parser.parse_args()
+    ################################################################
+    for arg in args.file_list:
+        with open(arg,"r") as ifh:
+            pass
+    ################################################################
+    return result
+##############################################################################
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+##############################################################################
+# Local Variables:
+# mode: python
+# python-indent: 4
+# End:
