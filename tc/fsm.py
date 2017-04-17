@@ -1,4 +1,6 @@
 #!/usr/bin/python3.2 -tt
+# Copyright (c) 2016 ghst659@github.com
+# All rights reserved.
 import threading
 ##############################################################################
 class IllegalState(Exception):
