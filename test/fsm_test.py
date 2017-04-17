@@ -5,7 +5,7 @@ import tc.fsm
 
 class TestBase(unittest.TestCase):
     def setUp(self):
-        self.fsm = tc.fsm.FSMContext()
+        self.fsm = tc.fsm.Context()
 
     def tearDown(self):
         del self.fsm
@@ -26,37 +26,37 @@ class TestOneState(TestBase):
         with self.assertRaises(tc.fsm.IllegalState):
             self.fsm.process()
 
-    def test_two_state(self):
+    def test_cycling_state(self):
         """Test three state rotation."""
         self.fsm.register_state(A())
         self.fsm.register_state(B())
         self.fsm.register_state(C())
         self.fsm.current_state = "A"
         self.assertEqual("A", self.fsm.current_state)
-        self.fsm.process()
+        self.assertEqual("A to B", self.fsm.process())
         self.assertEqual("B", self.fsm.current_state)
-        self.fsm.process()
+        self.assertEqual("B to C", self.fsm.process())
         self.assertEqual("C", self.fsm.current_state)
-        self.fsm.process()
+        self.assertEqual("C to A", self.fsm.process())
         self.assertEqual("A", self.fsm.current_state)
 
 class A(tc.fsm.State):
-    """One of two states."""
+    """One of three states."""
 
     def process(self, *args, **kwargs):
-        return "B"
+        return ("B", "A to B")
 
 class B(tc.fsm.State):
-    """One of two states."""
+    """One of three states."""
 
     def process(self, *args, **kwargs):
-        return "C"
+        return ("C", "B to C")
 
 class C(tc.fsm.State):
     """One of three states."""
 
     def process(self, *args, **kwargs):
-        return "A"
+        return ("A", "C to A")
 
 if __name__ == "__main__":
     unittest.main()
