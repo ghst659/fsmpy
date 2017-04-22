@@ -3,7 +3,6 @@ from __future__ import print_function
 import sys                      # access to basic things like sys.argv
 import os                       # access pathname utilities
 import argparse                 # for command-line options parsing
-import logging
 import fileinput
 import tc.fsm
 ##############################################################################
@@ -70,9 +69,6 @@ def main(argv):
     global mydir; mydir = os.path.dirname(os.path.abspath(__file__))
     ################################
     parser = argparse.ArgumentParser(description=main.__doc__)
-    parser.add_argument("-l","--logfile", default=None,
-                        dest='logfile', 
-                        help="optional name of file for logging messages.")
     parser.add_argument("-v","--verbose",
                         dest='verbose', action="store_true",
                         help="run verbosely")
@@ -80,16 +76,6 @@ def main(argv):
                         metavar="TARGET_FILE", nargs="*",
                         help="target files to process, nargs=* means 0 or more")
     args = parser.parse_args(args=argv[1:])  # will exit on parse error
-    ################################################################
-    # set up logging channels
-    log = logging.getLogger(me);
-    log.setLevel(logging.DEBUG if args.verbose else logging.INFO)
-    logfile = args.logfile
-    if isinstance(logfile,str):
-        if os.path.exists(logfile):
-            os.remove(logfile)
-        log.addHandler(logging.FileHandler(logfile))
-    console = logging.StreamHandler(sys.stderr); console.setLevel(logging.WARNING); log.addHandler(console)
     ################################################################
     if exit_code == 0:
         buf = []

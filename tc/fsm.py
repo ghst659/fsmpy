@@ -23,12 +23,16 @@ class State:
 class Context:
     """The state machine state engine."""
 
-    def __init__(self):
+    def __init__(self, *states):
         """Initiailses the state machine."""
         self._lock = threading.RLock()
         self._state_tbl = {}    # maps state name to register State objects
         self._current = None    # current state of the machine
         self._strict = False    # raise ValueError on illegal state
+        if states:
+            for s in states:
+                self.register_state(s)
+            self.current_state = states[0].name
 
     @property
     def strict(self):
