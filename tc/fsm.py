@@ -28,7 +28,7 @@ class Context:
         self._lock = threading.RLock()
         self._state_tbl = {}    # maps state name to register State objects
         self._current = None    # current state of the machine
-        self._strict = False    # raise ValueError on illegal state
+        self._strict = True    # raise ValueError on illegal state
         if states:
             for s in states:
                 self.register_state(s)
@@ -68,9 +68,12 @@ class Context:
             else:
                 pass
 
-    def register_state(self, state_obj):
+    def register_state(self, state_obj, name=None):
         """Registers STATE_OBJECT as a possible state."""
-        tag = state_obj.name    # may raise AttributeError
+        required_hook = getattr(state_obj, "process")
+        if not callable(required_hook):
+            raise ValueError("invalid state object")
+        tag = name if name else state_obj.name
         with self._lock:
             self._state_tbl[tag] = state_obj
         return tag

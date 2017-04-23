@@ -11,20 +11,28 @@ class TestBase(unittest.TestCase):
     def tearDown(self):
         del self.fsm
 
-class TestOneState(TestBase):
+class TestMachine(TestBase):
     """Basic tests for the state machine base class."""
 
     def test_empty(self):
         """Test empty state machine."""
+        with self.assertRaises(ValueError):
+            x = self.fsm.current_state
+        self.fsm.strict = False
         self.assertTrue(self.fsm.current_state is None)
+
+    def test_registration(self):
+        """Test registration of an invalid object."""
+        with self.assertRaises(AttributeError):
+            self.fsm.register_state(Z())
 
     def test_illegal_state(self):
         """Test setting an illegal state."""
         self.fsm.register_state(A())
-        with self.assertRaises(tc.fsm.IllegalState):
+        with self.assertRaises(ValueError):
             self.fsm.current_state = "X"
         self.fsm.current_state = "A"
-        with self.assertRaises(tc.fsm.IllegalState):
+        with self.assertRaises(ValueError):
             self.fsm.process()
 
     def test_cycling_state(self):
@@ -40,6 +48,10 @@ class TestOneState(TestBase):
         self.assertEqual("C", self.fsm.current_state)
         self.assertEqual("C to A", self.fsm.process())
         self.assertEqual("A", self.fsm.current_state)
+
+class Z:
+    """Invalid state class."""
+    pass
 
 class A(tc.fsm.State):
     """One of three states."""
