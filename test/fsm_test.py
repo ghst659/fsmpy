@@ -17,21 +17,19 @@ class TestMachine(TestBase):
     def test_empty(self):
         """Test empty state machine."""
         with self.assertRaises(ValueError):
-            x = self.fsm.current_state
-        self.fsm.strict = False
-        self.assertTrue(self.fsm.current_state is None)
+            x = self.fsm.current_state()
 
     def test_registration(self):
         """Test registration of an invalid object."""
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(TypeError):
             self.fsm.register_state(Z())
 
     def test_illegal_state(self):
         """Test setting an illegal state."""
         self.fsm.register_state(A())
         with self.assertRaises(ValueError):
-            self.fsm.current_state = "X"
-        self.fsm.current_state = "A"
+            self.fsm.set_current_state("X")
+        self.fsm.set_current_state("A")
         with self.assertRaises(ValueError):
             self.fsm.process()
 
@@ -40,36 +38,34 @@ class TestMachine(TestBase):
         self.fsm.register_state(A())
         self.fsm.register_state(B())
         self.fsm.register_state(C())
-        self.fsm.current_state = "A"
-        self.assertEqual("A", self.fsm.current_state)
+        self.fsm.set_current_state("A")
+        self.assertEqual("A", self.fsm.current_state())
         self.assertEqual("A to B", self.fsm.process())
-        self.assertEqual("B", self.fsm.current_state)
+        self.assertEqual("B", self.fsm.current_state())
         self.assertEqual("B to C", self.fsm.process())
-        self.assertEqual("C", self.fsm.current_state)
+        self.assertEqual("C", self.fsm.current_state())
         self.assertEqual("C to A", self.fsm.process())
-        self.assertEqual("A", self.fsm.current_state)
+        self.assertEqual("A", self.fsm.current_state())
 
-class Z:
+class Z(tc.fsm.State):
     """Invalid state class."""
-    pass
+    def name(self):
+        return self.__class__.__name__
 
-class A(tc.fsm.State):
+class A(Z):
     """One of three states."""
-
     def process(self, *args, **kwargs):
-        return ("B", "A to B")
+        return tc.fsm.ProcessResult("B", "A to B")
 
-class B(tc.fsm.State):
+class B(Z):
     """One of three states."""
-
     def process(self, *args, **kwargs):
-        return ("C", "B to C")
+        return tc.fsm.ProcessResult("C", "B to C")
 
-class C(tc.fsm.State):
+class C(Z):
     """One of three states."""
-
     def process(self, *args, **kwargs):
-        return ("A", "C to A")
+        return tc.fsm.ProcessResult("A", "C to A")
 
 if __name__ == "__main__":
     unittest.main()
