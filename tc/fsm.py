@@ -5,14 +5,14 @@ import abc
 import collections
 import threading
 ##############################################################################
-ProcessResult = collections.namedtuple("ProcessResult", ["next", "data"])
+ProcessResult = collections.namedtuple("ProcessResult", ["nexttag", "data"])
                                        
 class State(metaclass=abc.ABCMeta):
     """State interface."""
     @abc.abstractmethod
-    def name(self):
-        """Returns the name of this state."""
-        raise NotImplementedError("must override name method.")
+    def tag(self):
+        """Returns the tag of this state."""
+        raise NotImplementedError("must override tag method.")
 
     @abc.abstractmethod
     def process(self, *args, **kwargs):
@@ -24,37 +24,37 @@ class Context:
     def __init__(self, *states):
         """Initiailses the state machine."""
         self._lock = threading.RLock()
-        self._state_tbl = {}    # maps state name to register State objects
-        self._current = None    # current state of the machine
+        self._state_tbl = {}    # maps state tag to register State objects
+        self._incumbent = None    # current state of the machine
         if states:
             for s in states:
-                self.register_state(s)
-            self.current_state = states[0].name()
+                self.register(s)
+            self.current_state = states[0].tag()
 
-    def current_state(self):
-        """The name of the current machine state."""
+    def current(self):
+        """The tag of the current machine state."""
         result = None
         with self._lock:
-            if self._current is not None:
-                result = self._current.name()
+            if self._incumbent is not None:
+                result = self._incumbent.tag()
             else:
                 raise ValueError("illegal state")
         return result
 
-    def set_current_state(self, state_tag):
+    def set_current(self, state_tag):
         """Sets current state to the state named STATE_TAG."""
         with self._lock:
             if state_tag in self._state_tbl:
-                self._current = self._state_tbl[state_tag]
+                self._incumbent = self._state_tbl[state_tag]
             else:
                 raise ValueError("illegal next state: %s" % state_tag)
 
-    def register_state(self, state_obj):
+    def register(self, state_obj):
         """Registers STATE_OBJECT as a possible state."""
         required_hook = getattr(state_obj, "process")
         if not callable(required_hook):
             raise ValueError("invalid state object")
-        tag = state_obj.name()
+        tag = state_obj.tag()
         with self._lock:
             self._state_tbl[tag] = state_obj
 
@@ -62,9 +62,9 @@ class Context:
         """Dispatch current state to process *ARGS and **KWARGS."""
         process_result = None
         with self._lock:
-            if self._current:
-                process_result = self._current.process(*args, **kwargs)
-                self.set_current_state(process_result.next)
+            if self._incumbent:
+                process_result = self._incumbent.process(*args, **kwargs)
+                self.set_current(process_result.nexttag)
             else:
                 raise ValueError("illegal next state")
         return process_result.data
